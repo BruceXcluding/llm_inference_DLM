@@ -11,7 +11,7 @@ from prompt_sample import input_sample
 # ======== Hard-coded, Start
 cache = True
 outlier_percent = 30
-gpu_memory_utilization = 0.8 # vllm
+gpu_memory_utilization = 1.0 # vllm
 # ======== Hard-coded, End
 
 def llm_gen_tokens(model, max_length, input_ids, tokenizer, backend, sampling_params):
@@ -171,7 +171,8 @@ def main():
             elif args.model_path == "codellama/CodeLlama-7b-Instruct-hf": 
                 max_num_batched_tokens = 16384
             else:
-                max_num_batched_tokens = 8192 
+                #max_num_batched_tokens = 8192 
+                max_num_batched_tokens =  4096
 
             model = LLM(
                 model=args.model_path,
