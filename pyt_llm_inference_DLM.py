@@ -176,7 +176,7 @@ def main():
             else:
                 #max_num_batched_tokens = 8192 
                 max_num_batched_tokens =  4096
-                gpu_memory_utilization = 7.0 
+                gpu_memory_utilization = 0.7
 
             model = LLM(
                 model=args.model_path,
