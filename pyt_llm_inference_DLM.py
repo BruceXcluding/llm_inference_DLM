@@ -48,7 +48,7 @@ def main():
     parser.add_argument(
         "--platform",
         type=str,
-        choices=["MI210", "2xMI250", "4xMI250", "MI300X", "4xMI300X", "8xMI300X", "xH100", "NAVI3x"],
+        choices=["MI210", "2xMI250", "4xMI250", "MI300", "4xMI300", "8xMI300", "xH100", "NAVI3x"],
         default="MI210",
         help="DL platform name"
     )
