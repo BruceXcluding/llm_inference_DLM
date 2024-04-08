@@ -48,9 +48,15 @@ def main():
     parser.add_argument(
         "--platform",
         type=str,
-        choices=["MI210", "2xMI250", "4xMI250", "MI300", "4xMI300", "8xMI300", "xH100", "NAVI3x"],
+        choices=["MI210","MI300", "NAVI3x", "H100", "H200"],
         default="MI210",
         help="DL platform name"
+    )
+    parser.add_argument(
+        "--n_gpu",
+        type=str,
+        default=1,
+        help="Num of GPUs"
     )
     parser.add_argument(
         "--precision",
@@ -136,69 +142,65 @@ def main():
         #dtype = float8e4m3fn
         #dtype = float8e5m2fnuz
 
-    if args.platform == "MI210" or args.platform == "MI300" or args.platform == "NAVI3x":
-        # tokenizer
+    # tokenizer
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_path, padding_side="left", trust_remote_code=True, uese_fast=False)
+    except:
+        if args.model_path == "google/flan-t5-xxl":
+            from transformers import T5Tokenizer
+            tokenizer = T5Tokenizer.from_pretrained(args.model_path, padding_side="left", trust_remote_code=True, uese_fast=False)
+        else:
+            raise RuntimeError("Tokenizer is not found")
+    # model
+    if backend == "pyt":
         try:
-            tokenizer = AutoTokenizer.from_pretrained(args.model_path, padding_side="left", trust_remote_code=True, uese_fast=False)
+            model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation=args.attn_implementation, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
         except:
             if args.model_path == "google/flan-t5-xxl":
-                from transformers import T5Tokenizer
-                tokenizer = T5Tokenizer.from_pretrained(args.model_path, padding_side="left", trust_remote_code=True, uese_fast=False)
+                dtype=torch.float32
+                from transformers import T5ForConditionalGeneration
+                model = T5ForConditionalGeneration.from_pretrained(args.model_path, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
+            elif args.model_path == "tiiuae/falcon-7b-instruct":
+                dtype=torch.bfloat16
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
             else:
-                raise RuntimeError("Tokenizer is not found")
-        # model
-        if backend == "pyt":
-            try:
-                model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation=args.attn_implementation, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
-            except:
-                if args.model_path == "google/flan-t5-xxl":
-                    dtype=torch.float32
-                    from transformers import T5ForConditionalGeneration
-                    model = T5ForConditionalGeneration.from_pretrained(args.model_path, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
-                elif args.model_path == "tiiuae/falcon-7b-instruct":
-                    dtype=torch.bfloat16
-                    model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
-                else:
-                    model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
-        elif backend == "vllm":
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=dtype, trust_remote_code=True, device_map="auto")
+    elif backend == "vllm":
 
-            if args.model_path == "mistralai/Mixtral-8x7B-Instruct-v0.1": 
-                max_num_batched_tokens = 32768 # vllm, mixtral moe exception
-                global gpu_memory_utilization
-                gpu_memory_utilization = 0.4 # workaround to prevent oom
-            elif args.model_path == args.model_path == "mistralai/Mistral-7B-Instruct-v0.2": 
-                max_num_batched_tokens = 32768 # vllm, mixtral moe exception
-            elif args.model_path == "codellama/CodeLlama-7b-Instruct-hf": 
-                max_num_batched_tokens = 16384
-            elif args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ" or args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ":
-                max_num_batched_tokens =  4096
-                gpu_memory_utilization = 1.0 # workaround to prevent oom
-            else:
-                #max_num_batched_tokens = 8192 
-                max_num_batched_tokens =  4096
-                gpu_memory_utilization = 0.7
+        if args.model_path == "mistralai/Mixtral-8x7B-Instruct-v0.1": 
+            max_num_batched_tokens = 32768 # vllm, mixtral moe exception
+            global gpu_memory_utilization
+            gpu_memory_utilization = 0.4 # workaround to prevent oom
+        elif args.model_path == args.model_path == "mistralai/Mistral-7B-Instruct-v0.2": 
+            max_num_batched_tokens = 32768 # vllm, mixtral moe exception
+        elif args.model_path == "codellama/CodeLlama-7b-Instruct-hf": 
+            max_num_batched_tokens = 16384
+        elif args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ" or args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ":
+            max_num_batched_tokens =  4096
+            gpu_memory_utilization = 1.0 # workaround to prevent oom
+        else:
+            #max_num_batched_tokens = 8192 
+            max_num_batched_tokens =  4096
+            gpu_memory_utilization = 0.7
 
-            model = LLM(
-                model=args.model_path,
-                tokenizer=args.model_path,
-                tensor_parallel_size=1,
-                #max_num_seqs=1, #TODO
-                #max_num_batched_tokens=1 * 128, #TODO
-                #max_num_batched_tokens=200,
-                max_num_batched_tokens = max_num_batched_tokens,
-                trust_remote_code=True,
-                gpu_memory_utilization = gpu_memory_utilization,
-                )
+        model = LLM(
+            model=args.model_path,
+            tokenizer=args.model_path,
+            tensor_parallel_size=args.n_gpu,
+            #max_num_seqs=1, #TODO
+            #max_num_batched_tokens=1 * 128, #TODO
+            #max_num_batched_tokens=200,
+            max_num_batched_tokens = max_num_batched_tokens,
+            trust_remote_code=True,
+            gpu_memory_utilization = gpu_memory_utilization,
+            )
 
-        elif backend == "gptq":
-            raise RuntimeError(f"{backend} is not implemented")
-        elif backend == "awq":
-            raise RuntimeError(f"{backend} is not implemented")
-        elif backend == "tgi":
-            raise RuntimeError(f"{backend} is not implemented")
-    else: 
-        # TODO: mGPUs + manual_device_map
-        pass
+    elif backend == "gptq":
+        raise RuntimeError(f"{backend} is not implemented")
+    elif backend == "awq":
+        raise RuntimeError(f"{backend} is not implemented")
+    elif backend == "tgi":
+        raise RuntimeError(f"{backend} is not implemented")
 
     inputs = [input_sample()]
 
