@@ -54,7 +54,7 @@ def main():
     )
     parser.add_argument(
         "--n_gpu",
-        type=str,
+        type=int,
         default=1,
         help="Num of GPUs"
     )
