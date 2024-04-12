@@ -191,6 +191,7 @@ def main():
                 #max_num_seqs=1, #TODO
                 #max_num_batched_tokens=1 * 128, #TODO
                 #max_num_batched_tokens=200,
+                enforce_eager=True,
                 max_num_batched_tokens = max_num_batched_tokens,
                 trust_remote_code=True,
                 gpu_memory_utilization = gpu_memory_utilization,
@@ -204,6 +205,7 @@ def main():
                 #max_num_seqs=1, #TODO
                 #max_num_batched_tokens=1 * 128, #TODO
                 #max_num_batched_tokens=200,
+                enforce_eager=True,
                 max_num_batched_tokens = max_num_batched_tokens,
                 trust_remote_code=True,
                 gpu_memory_utilization = gpu_memory_utilization,
