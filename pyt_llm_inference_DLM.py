@@ -181,7 +181,7 @@ def main():
                 gpu_memory_utilization = 1.0 # workaround to prevent oom
             else:
                 max_num_batched_tokens =  4096
-                gpu_memory_utilization = 8.0 # workaround to prevent oom
+                gpu_memory_utilization =  0.8 # workaround to prevent oom
         else:
             #max_num_batched_tokens = 8192 
             max_num_batched_tokens =  4096
