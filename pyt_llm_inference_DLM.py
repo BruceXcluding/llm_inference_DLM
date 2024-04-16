@@ -175,17 +175,17 @@ def main():
             max_num_batched_tokens = 32768 # vllm, mixtral moe exception
         elif args.model_path == "codellama/CodeLlama-7b-Instruct-hf": 
             max_num_batched_tokens = 16384
-        elif args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ" or args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ":
+        elif args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ" or args.model_path == "TheBloke/Llama-2-70B-GPTQ":
             if args.n_gpu == 1:
                 max_num_batched_tokens =  4096
-                gpu_memory_utilization = 1.0 # workaround to prevent oom
+                gpu_memory_utilization = 0.98 # workaround to prevent oom
             else:
                 max_num_batched_tokens =  4096
-                gpu_memory_utilization =  0.98 # workaround to prevent oom
+                gpu_memory_utilization =  0.8 # workaround to prevent oom
         else:
-            #max_num_batched_tokens = 8192 
             max_num_batched_tokens =  4096
             gpu_memory_utilization = 0.7
+
         if args.n_gpu == 1:
             model = LLM(
                 model=args.model_path,
