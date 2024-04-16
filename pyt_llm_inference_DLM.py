@@ -183,33 +183,15 @@ def main():
             max_num_batched_tokens =  4096
             gpu_memory_utilization = 0.7
 
-        if args.n_gpu == 1:
-            model = LLM(
-                model=args.model_path,
-                tokenizer=args.model_path,
-                tensor_parallel_size=args.n_gpu,
-                #max_num_seqs=1, #TODO
-                #max_num_batched_tokens=1 * 128, #TODO
-                #max_num_batched_tokens=200,
-                enforce_eager=True,
-                max_num_batched_tokens = max_num_batched_tokens,
-                trust_remote_code=True,
-                gpu_memory_utilization = gpu_memory_utilization,
-                )
-        else:
-            model = LLM(
-                model=args.model_path,
-                tokenizer=args.model_path,
-                tensor_parallel_size=args.n_gpu,
-                worker_use_ray=True,
-                #max_num_seqs=1, #TODO
-                #max_num_batched_tokens=1 * 128, #TODO
-                #max_num_batched_tokens=200,
-                enforce_eager=True,
-                max_num_batched_tokens = max_num_batched_tokens,
-                trust_remote_code=True,
-                gpu_memory_utilization = gpu_memory_utilization,
-                )
+        model = LLM(
+            model=args.model_path,
+            tokenizer=args.model_path,
+            tensor_parallel_size=args.n_gpu,
+            enforce_eager=True,
+            max_num_batched_tokens = max_num_batched_tokens,
+            trust_remote_code=True,
+            gpu_memory_utilization = gpu_memory_utilization,
+            )
 
     elif backend == "gptq":
         raise RuntimeError(f"{backend} is not implemented")
