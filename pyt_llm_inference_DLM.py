@@ -178,7 +178,7 @@ def main():
         elif args.model_path == "TheBloke/Llama-2-70B-Chat-GPTQ" or args.model_path == "TheBloke/Llama-2-70B-GPTQ":
             if args.n_gpu == 1:
                 max_num_batched_tokens =  4096
-                gpu_memory_utilization = 1.00 # workaround to prevent oom
+                gpu_memory_utilization = 0.9 # workaround to prevent oom
             else:
                 max_num_batched_tokens =  4096
                 gpu_memory_utilization =  0.8 # workaround to prevent oom
