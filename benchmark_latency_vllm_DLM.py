@@ -96,7 +96,7 @@ def main(args: argparse.Namespace):
         print(f'{percentage}% percentile latency: {percentile} seconds')
     sep = " , "
     throughput = 1000/np.mean(latencies)*args.batch_size*(1+args.output_len)
-    with open(args.csv, mode='w') as csv_latency:
+    with open(args.csv, mode='a') as csv_latency:
         latency_summary  = args.model + sep \
                 + str(np.mean(latencies)) + sep + " latency(s), " \
                 + str(throughput) + sep + " throughput(tok/s), " \
