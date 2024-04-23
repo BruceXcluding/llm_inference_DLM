@@ -9,7 +9,7 @@ import torch
 from tqdm import tqdm
 
 from vllm import LLM, SamplingParams
-
+import csv
 
 def main(args: argparse.Namespace):
     print(args)
@@ -22,8 +22,7 @@ def main(args: argparse.Namespace):
               tensor_parallel_size=args.tensor_parallel_size,
               trust_remote_code=args.trust_remote_code,
               dtype=args.dtype,
-              #enforce_eager=args.enforce_eager,
-              enforce_eager=1,
+              enforce_eager=args.enforce_eager,
               kv_cache_dtype=args.kv_cache_dtype,
               quantization_param_path=args.quantization_param_path,
               device=args.device,
@@ -35,11 +34,13 @@ def main(args: argparse.Namespace):
 
     sampling_params = SamplingParams(
         n=args.n,
-        temperature=0.0 if args.use_beam_search else 1.0,
+        #temperature=0.0 if args.use_beam_search else 1.0,
+        temperature=0.0,
         top_p=1.0,
         use_beam_search=args.use_beam_search,
         ignore_eos=True,
         max_tokens=args.output_len,
+        min_tokens=args.output_len,
     )
     print(sampling_params)
     dummy_prompt_token_ids = np.random.randint(10000,
@@ -93,7 +94,18 @@ def main(args: argparse.Namespace):
     print(f'Avg latency: {np.mean(latencies)} seconds')
     for percentage, percentile in zip(percentages, percentiles):
         print(f'{percentage}% percentile latency: {percentile} seconds')
-
+    sep = ","
+    throughput = 1000/np.mean(latencies)*args.batch_size*(1+args.output_len)
+    with open(args.csv_out, mode='w') as csv_latency:
+        latency_summary  = args.model + sep \
+                + str(np.mean(latencies)) + sep + " latency(s), " \
+                + str(throughput) + sep + " throughput(tok/s), " \
+                + " tp, " + str(args.tensor_parallel_size) \
+                + " batch_size, "+str(args.batch_size) \
+                + " prompt_len, "+str(args.input_len) \
+                + " new_tokens, "+str(args.output_len) + "\n"
+        print(latency_summary)
+        csv_latency.write(latency_summary)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -116,11 +128,11 @@ if __name__ == '__main__':
     parser.add_argument('--use-beam-search', action='store_true')
     parser.add_argument('--num-iters-warmup',
                         type=int,
-                        default=10,
+                        default=1,
                         help='Number of iterations to run for warmup.')
     parser.add_argument('--num-iters',
                         type=int,
-                        default=30,
+                        default=3,
                         help='Number of iterations to run.')
     parser.add_argument('--trust-remote-code',
                         action='store_true',
@@ -198,5 +210,10 @@ if __name__ == '__main__':
                         default=None,
                         help='directory to download and load the weights, '
                         'default to the default cache dir of huggingface')
+    parser.add_argument(
+        "--csv",
+        type=str,
+        help="Csv file out"
+    )
     args = parser.parse_args()
     main(args)
