@@ -95,15 +95,15 @@ def main(args: argparse.Namespace):
     for percentage, percentile in zip(percentages, percentiles):
         print(f'{percentage}% percentile latency: {percentile} seconds')
     sep = " , "
-    throughput = 1000/np.mean(latencies)*args.batch_size*(1+args.output_len)
+    throughput = 1/np.mean(latencies)*args.batch_size*(1+args.output_len)
     with open(args.csv, mode='a') as csv_latency:
         latency_summary  = args.model + sep \
-                + str(np.mean(latencies)) + sep + " latency(s), " \
-                + str(throughput) + sep + " throughput(tok/s), " \
-                + " tp, " + str(args.tensor_parallel_size) + sep \
-                + " batch_size, "+str(args.batch_size) + sep \
-                + " prompt_len, "+str(args.input_len) + sep \
-                + " new_tokens, "+str(args.output_len) + "\n"
+                + str(np.mean(latencies)) + sep + " latency(s) , " \
+                + str(throughput) + sep + " throughput(tok/s) , " \
+                + str(args.tensor_parallel_size) + sep + " tp , " \
+                + str(args.batch_size) + sep + " batch_size , " \
+                + str(args.input_len) + sep + " prompt_len , " \
+                + str(args.output_len) + sep +" new_tokens \n"
         print(latency_summary)
         csv_latency.write(latency_summary)
 
